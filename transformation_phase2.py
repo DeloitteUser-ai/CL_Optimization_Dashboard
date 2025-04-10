@@ -52,15 +52,15 @@ def clean_collections(collections_df):
     }, inplace = True)
     return collections_df
 
-Billing_type_df = pd.read_excel(r'C:\Users\Deloite\Desktop\Agcare-GIT\AgCare\app_phase_2_new\Data for view\Billing Type.xls')
-CL_log_df = pd.read_pickle(r'C:\Users\Deloite\Desktop\Agcare-GIT\AgCare\app_phase_2_new\Data for view\credit_limit_history_log.pkl')
+Billing_type_df = pd.read_excel(r'.\Data_for_view\Billing Type.xls')
+CL_log_df = pd.read_pickle(r'.\Data_for_view\credit_limit_history_log.pkl')
 CL_log_df.rename(columns =
     {'Customer': 'Customer Code',
     'Update_Date': 'Date',
     'VALUE_OLD': 'Old value',
     'VALUE_NEW': 'New value'}
 , inplace = True)
-customer_df = pd.read_pickle(r'C:\Users\Deloite\Desktop\Agcare-GIT\AgCare\app_phase_2_new\Data for view\customer_master_clean_v2')
+customer_df = pd.read_pickle(r'.\Data_for_view\customer_master_clean_v2')
 cutoff_date = pd.to_datetime('2024-03-31')
 customer_df.rename(columns = {
     'CM_Opening_Balance' : 'CM_Opening Balances',

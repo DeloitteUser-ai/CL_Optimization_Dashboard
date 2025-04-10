@@ -454,7 +454,8 @@ if page == "Feature File Generation from Source Data":
     st.write("End Date:", cutoff_date)
 
     customer_ids_input = st.text_input("Enter customer IDs (separated by commas)")
-
+    if 'customer_ids' not in st.session_state:
+        st.session_state.customer_ids = None
     # Button to add customer IDs
     if st.button("Add"):
         # Split the input string by commas and strip any extra whitespace
