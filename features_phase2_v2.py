@@ -20,6 +20,7 @@ customer_df.rename(columns = {
     'CM_State': 'CM_State_Code',
     'CM_Region_Name': 'CM_State'    
 }, inplace = True)
+
 # customer_gst_df = pd.read_pickle(r'C:\Users\darkhandelwal\Desktop\AgCare-Git\Data\PKL_Data_FINAL_v4\customer+gst_df.pkl')
 # customer_gst_df = pd.read_pickle(r'C:\Users\Deloite\Desktop\Agcare-GIT\Data\PKL_Data_FINAL_v4\customer+gst_df.pkl')
 # rfm_results = pd.read_excel(r'C:\Users\Deloite\Desktop\Agcare-GIT\Data\PKL_Data_FINAL_v4\Phase2_RFM_Results.xlsx', sheet_name="RFM_results")

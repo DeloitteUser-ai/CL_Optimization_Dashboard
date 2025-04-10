@@ -8,7 +8,7 @@ SERVER = 'WIN-O0UQP979DTI\MSSQLSERVER01'
 DATABASE = 'SAFEX'
 CONNECTION_STRING = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={SERVER};DATABASE={DATABASE};Trusted_Connection=yes"
 
-def fetch_and_filter_customer_data():
+def fetch_and_filter_customer_data(customer_ids):
     try:
         # Connect to SQL Server
         with pyodbc.connect(CONNECTION_STRING) as connection:
@@ -20,9 +20,10 @@ def fetch_and_filter_customer_data():
             # query = f"""SELECT * 
             # FROM [Customer Master] 
             # WHERE KUNNR IN('0011001634')"""
+            formatted_ids = ', '.join(f"'{id}'" for id in customer_ids)
             query = f"""SELECT * 
                 FROM [Customer Master] where KUNNR in
-                ('0011010820')"""
+                ({formatted_ids})"""
             # query = f"""SELECT * 
             #     FROM [Customer Master] where KUNNR in
             #     ('0011005431', '0011010820', '0011010820', '0011005376', '0011010422', '0031002586',
@@ -119,12 +120,12 @@ def fetch_and_filter_customer_data():
         return None
 
 
-def fetch_sales_data():
+def fetch_sales_data(customer_ids):
     server = 'WIN-O0UQP979DTI\MSSQLSERVER01'
     database = 'SAFEX'
     connection_string = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};Trusted_Connection=yes"
     view_name = 'dbo.[Billing Details]'
-
+    formatted_ids = ', '.join(f"'{id}'" for id in customer_ids)
     try:
         # Connect to SQL Server
         with pyodbc.connect(connection_string) as connection:
@@ -135,7 +136,7 @@ def fetch_sales_data():
             # """
             query = f"""SELECT * 
                 FROM [Billing Details] where KUNNR in
-                ('0011010820')"""
+                ({formatted_ids})"""
             # query = """SELECT * 
             #     FROM [Billing Details] 
             #     WHERE KUNNR IN
@@ -162,6 +163,7 @@ def fetch_sales_data():
             df = pd.read_sql(query, connection)
 
         # Rename columns
+        
         rename_columns = {
             'VBELN': 'Billing Doc.',
             'POSNR_I': 'Item',
@@ -224,9 +226,9 @@ def fetch_sales_data():
         print(f"Error fetching sales data: {e}")
         return None
 
-def clean_sales_data(sales_df, customer_df):
-    cutoff_date = pd.to_datetime('31-03-2024')
-    start_cutoff_date = pd.to_datetime('01-04-2022', format='%d-%m-%Y')
+def clean_sales_data(sales_df, customer_df, cutoff_date, start_cutoff_date):
+    cutoff_date = pd.to_datetime(cutoff_date)
+    start_cutoff_date = pd.to_datetime(start_cutoff_date, format='%d-%m-%Y')
     sales_df['Billing Date'] = pd.to_datetime(sales_df['Billing Date'])
     sales_df['Customer'] = sales_df['Customer'].astype(str).str.lstrip('0')
     # getting only common customers in sales df
@@ -246,14 +248,14 @@ def clean_sales_data(sales_df, customer_df):
     }, inplace = True)
     return sales_df
 
-def clean_collections(collections_df, customer_df):
+def clean_collections(collections_df, customer_df, cutoff_date, start_cutoff_date):
     # today = datetime.today()
     # fiscal_year_end = pd.to_datetime(f"{today.year - 1 if today.month <= 3 else today.year}-03-31")
     # cutoff_date = fiscal_year_end
     # converting posting date to datetime value
     collections_df['Posting Date'] = pd.to_datetime(collections_df['Posting Date'])
-    cutoff_date = pd.to_datetime('31-03-2024')
-    start_cutoff_date = pd.to_datetime('01-04-2022', format='%d-%m-%Y')
+    cutoff_date = pd.to_datetime(cutoff_date)
+    start_cutoff_date = pd.to_datetime(start_cutoff_date, format='%d-%m-%Y')
     # taking posting date <= cutoff date in collections_df
     collections_df = collections_df[collections_df['Posting Date'] <= cutoff_date]
     collections_df = collections_df[collections_df['Posting Date'] >= start_cutoff_date]
@@ -274,7 +276,7 @@ def clean_collections(collections_df, customer_df):
     }, inplace = True)
     return collections_df
 
-def fetch_collections_data():
+def fetch_collections_data(customer_ids):
     server = 'WIN-O0UQP979DTI\MSSQLSERVER01'
     database = 'SAFEX'
     connection_string = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};Trusted_Connection=yes"
@@ -287,13 +289,13 @@ def fetch_collections_data():
 
     # Define the view name
     view_name = '[Accounting entries]'  # Use brackets if the view name contains spaces
-
+    formatted_ids = ', '.join(f"'{id}'" for id in customer_ids)
     # Query the view and load it into a DataFrame
     # query = """SELECT * FROM dbo.[Accounting entries] WHERE BUDAT > '20240331' and BUDAT <= '20240531'"""
     # query = f"""select * from [Accounting entries] where KUNNR in ('0031006972', '0021010218', '0021010229', '0021010309', '0011012965', '0031006663', '0021010647', '0021010694', '0031006648', '0011012831')"""
     query = f"""SELECT * 
                 FROM [Accounting Entries] where KUNNR  in 
-                 ('0011010820')"""
+                 ({formatted_ids})"""
     # query = f"""SELECT * 
     #             FROM [Accounting Entries] 
     #             WHERE KUNNR IN ('0011005431', '0011010820', '0011010820', '0011005376', '0011010422', '0031002586',

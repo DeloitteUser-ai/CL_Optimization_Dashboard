@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler
 import os 
 from PIL import Image
 import matplotlib.ticker as ticker
+from datetime import datetime
 import altair as alt
 import math 
 import joblib
@@ -428,6 +429,51 @@ if page == "Model to Generate Standardised Credit Limit":
         else:
             st.error("⚠️ Please upload all required data folders before generating the standardized credit limit.")
 if page == "Feature File Generation from Source Data":
+    cutoff_date = pd.to_datetime('31-03-2024')
+    
+    if 'end_date' not in st.session_state:
+        st.session_state.end_date = cutoff_date - pd.Timedelta(days=2*365)
+    
+    start_cutoff = st.session_state.end_date
+    
+    col1, col2, col3 = st.columns(3)
+    # Radio buttons for selecting the time period with default set to "2 years"
+    with col1:
+        if st.radio("Select the time period:", ["6 months", "1 year", "2 years"], index=2, key="period"):
+            period = st.session_state.period
+
+    if period == "6 months":
+        st.session_state.end_date = cutoff_date - pd.Timedelta(days=6*30)
+    elif period == "1 year":
+        st.session_state.end_date = cutoff_date - pd.Timedelta(days=365)
+    elif period == "2 year":
+        st.session_state.end_date = cutoff_date - pd.Timedelta(days=2*365)
+    
+    start_cutoff = st.session_state.end_date
+    st.write("Start Date:", start_cutoff)
+    st.write("End Date:", cutoff_date)
+
+    customer_ids_input = st.text_input("Enter customer IDs (separated by commas)")
+
+    # Button to add customer IDs
+    if st.button("Add"):
+        # Split the input string by commas and strip any extra whitespace
+        # new_ids = [f"'{id.strip()}'" for id in customer_ids_input.split(",")]
+        new_ids = [id.strip() for id in customer_ids_input.split(",")]
+        # Add new IDs to the session state list
+        st.session_state.customer_ids = new_ids
+        # Clear the input box
+        st.rerun()
+
+    if st.button("Clear List"):
+        st.session_state.customer_ids = []
+        st.rerun()
+    
+    if st.session_state.customer_ids is None:
+        st.error("Please Enter Customer IDs")
+        st.stop()
+    formatted_ids = ', '.join(f"'{id}'" for id in st.session_state.customer_ids)
+    st.write("**Selected Customers:** ", formatted_ids)
     # st.title("Upload Sales & Collections Data")
     # Sales_df, sales_filename = load_file(st.file_uploader("Upload Sales Data", type=["csv", "xlsx", "pkl"]))
     # Collections_df, collections_filename = load_file(st.file_uploader("Upload Collections Data", type=["csv", "xlsx", "pkl"]))
@@ -493,7 +539,7 @@ if page == "Feature File Generation from Source Data":
 
         if st.session_state.status == "Fetching Customer Master Data...":
             progress_bar = st.progress(20)
-            st.session_state.customer_master = fetch_data.fetch_and_filter_customer_data()
+            st.session_state.customer_master = fetch_data.fetch_and_filter_customer_data(st.session_state.customer_ids)
             # st.write(st.session_state.customer_master.shape)
             st.session_state.customer_master_fetched = True
             progress_bar.progress(60)
@@ -515,10 +561,10 @@ if page == "Feature File Generation from Source Data":
         if st.session_state.status == "Fetching Sales Data...":
             progress_bar = st.progress(0)
             progress_bar.progress(20)
-            sales_df = fetch_data.fetch_sales_data()
+            sales_df = fetch_data.fetch_sales_data(st.session_state.customer_ids)
             # st.write(sales_df.shape)
             progress_bar.progress(40)
-            sales_df = fetch_data.clean_sales_data(sales_df, st.session_state.customer_master)
+            sales_df = fetch_data.clean_sales_data(sales_df, st.session_state.customer_master, cutoff_date, start_cutoff)
             # sales_df = transformation_phase2.clean_sales(sales_df)
             # st.write(sales_df.shape)
             st.session_state.sales_df = sales_df
@@ -541,10 +587,10 @@ if page == "Feature File Generation from Source Data":
 
         if st.session_state.status == "Fetching Collections Data...":
             progress_bar = st.progress(20)
-            collections_df = fetch_data.fetch_collections_data()
+            collections_df = fetch_data.fetch_collections_data(st.session_state.customer_ids)
             # st.write(collections_df.shape)
             progress_bar.progress(40)
-            collections_df = fetch_data.clean_collections(collections_df, st.session_state.customer_master)
+            collections_df = fetch_data.clean_collections(collections_df, st.session_state.customer_master, cutoff_date, start_cutoff)
             # collections_df = transformation_phase2.clean_collections(collections_df)
             # st.write(st.session_state.customer_master.shape)
             # st.write(collections_df.shape)
