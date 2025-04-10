@@ -6,7 +6,7 @@ import numpy as np
 import uuid
 
 
-data_folder = r"..\..\Data"
+data_folder = r".\Data_for_view"
 
 cutoff_date = pd.to_datetime('31-03-2024')
 start_cutoff = pd.to_datetime('01-04-2022', format='%d-%m-%Y')
